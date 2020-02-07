@@ -1,0 +1,24 @@
+@startuml
+' 定义顺序
+participant ZookeeperRegistry
+participant AbstractryRegistry
+participant Properties
+
+
+== 缓存初始化 ==
+activate AbstractryRegistry #FFBBBB
+AbstractryRegistry -> AbstractryRegistry: AbstractRegistry() 构造
+AbstractryRegistry -> Properties: loadProperties()
+Properties -> Properties: load(fileInputStream)
+deactivate AbstractryRegistry
+
+
+== 缓存更新与保存 ==
+ZookeeperRegistry ->  AbstractryRegistry: doSubscribe
+AbstractryRegistry -> AbstractryRegistry: notify()
+AbstractryRegistry -> AbstractryRegistry: saveProperties()
+AbstractryRegistry --> AbstractryRegistry: doSaveProperties
+note left: 异步或者同步
+
+
+@enduml
