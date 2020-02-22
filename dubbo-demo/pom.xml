@@ -35,6 +35,7 @@
         <module>dubbo-samples-echo-server</module>
         <module>dubbo-samples-echo-clientx</module>
         <module>dubbo-samples-spi</module>
+        <module>dubbo-samples-spi-wrapper</module>
     </modules>
 
     <dependencyManagement>

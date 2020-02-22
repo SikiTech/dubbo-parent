@@ -1,0 +1,40 @@
+@startuml
+' 相关类
+interface EventListener
+interface ApplicationListener<E extends ApplicationEvent>
+class ServiceBean<T>
+abstract AbstractServiceConfig
+abstract AbstractInterfaceConfig
+class ServiceConfig<T>
+interface ApplicationContextAware
+interface Aware
+
+
+EventListener <|-- ApplicationListener
+ApplicationListener <|.. ServiceBean
+AbstractInterfaceConfig <|-- AbstractServiceConfig
+AbstractServiceConfig <|-- ServiceConfig
+ServiceConfig <|-- ServiceBean
+
+Aware <|-- ApplicationContextAware
+ApplicationContextAware <|.. ServiceBean
+
+
+interface EventListener {
+    + onApplicationEvent(ContextRefreshedEvent event)
+}
+
+
+class ServiceBean<T> {
+    + onApplicationEvent(ContextRefreshedEvent event)
+
+}
+
+note right of ServiceBean: onApplicationEvent()是服务导出入口
+note as N1
+EventListener、ApplicationListener都是Spring框架的接口，
+ServiceBean 是 Dubbo 与 Spring 框架进行整合的关键，
+可以看做是两个框架之间的桥梁
+end note
+
+@enduml

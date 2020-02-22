@@ -36,6 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * dubbo protocol support class.
+ * 支持懒连接服务器的信息交换客户端实现类
  */
 @SuppressWarnings("deprecation")
 final class LazyConnectExchangeClient implements ExchangeClient {
@@ -45,11 +46,30 @@ final class LazyConnectExchangeClient implements ExchangeClient {
     private final static Logger logger = LoggerFactory.getLogger(LazyConnectExchangeClient.class);
     protected final boolean requestWithWarning;
     private final URL url;
+
+    /**
+     * 通道处理器
+     */
     private final ExchangeHandler requestHandler;
+
+    /**
+     * 连接锁
+     */
     private final Lock connectLock = new ReentrantLock();
-    // lazy connect, initial state for connection
+
+    /**
+     * lazy connect 如果没有初始化时的连接状态
+     */
     private final boolean initialState;
+
+    /**
+     * 通信客户端
+     */
     private volatile ExchangeClient client;
+
+    /**
+     * 警告计数器。每超过一定次数，打印告警日志。参见 {@link #warning(Object)}
+     */
     private AtomicLong warningcount = new AtomicLong(0);
 
     public LazyConnectExchangeClient(URL url, ExchangeHandler requestHandler) {
@@ -67,10 +87,13 @@ final class LazyConnectExchangeClient implements ExchangeClient {
         if (logger.isInfoEnabled()) {
             logger.info("Lazy connect to " + url);
         }
+        // 获得锁
         connectLock.lock();
         try {
+            // 已初始化，跳过
             if (client != null)
                 return;
+            // 创建 Client ，连接服务器
             this.client = Exchangers.connect(url, requestHandler);
         } finally {
             connectLock.unlock();
@@ -79,7 +102,9 @@ final class LazyConnectExchangeClient implements ExchangeClient {
 
     @Override
     public ResponseFuture request(Object request) throws RemotingException {
+        // 理论来说，不会被调用。如果被调用，那么就是一个 BUG 咯
         warning(request);
+        // 保证客户端已经初始化
         initClient();
         return client.request(request);
     }
@@ -101,6 +126,7 @@ final class LazyConnectExchangeClient implements ExchangeClient {
     @Override
     public ResponseFuture request(Object request, int timeout) throws RemotingException {
         warning(request);
+        // 保证客户端已经初始化
         initClient();
         return client.request(request, timeout);
     }
@@ -127,6 +153,7 @@ final class LazyConnectExchangeClient implements ExchangeClient {
 
     @Override
     public boolean isConnected() {
+        // 客户端未初始化
         if (client == null) {
             return initialState;
         } else {

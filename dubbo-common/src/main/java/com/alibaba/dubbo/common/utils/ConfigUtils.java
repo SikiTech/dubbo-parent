@@ -36,6 +36,10 @@ import java.util.regex.Pattern;
 public class ConfigUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigUtils.class);
+
+    /**
+     * 变量正则表达式 如："${a1}" 或 "$v1"
+     */
     private static Pattern VARIABLE_PATTERN = Pattern.compile(
             "\\$\\s*\\{?\\s*([\\._0-9a-zA-Z]+)\\s*\\}?");
     private static volatile Properties PROPERTIES;
@@ -139,6 +143,10 @@ public class ConfigUtils {
         return sb.toString();
     }
 
+    /**
+     * 从dubbo.properties.file 中加载Properties
+     * @return 返回Properties
+     */
     public static Properties getProperties() {
         if (PROPERTIES == null) {
             synchronized (ConfigUtils.class) {
@@ -150,6 +158,7 @@ public class ConfigUtils {
                             path = Constants.DEFAULT_DUBBO_PROPERTIES;
                         }
                     }
+                    // 从.properties文件路径中获取属性
                     PROPERTIES = ConfigUtils.loadProperties(path, false, true);
                 }
             }
@@ -173,10 +182,12 @@ public class ConfigUtils {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static String getProperty(String key, String defaultValue) {
+        // 从系统变量中获取
         String value = System.getProperty(key);
         if (value != null && value.length() > 0) {
             return value;
         }
+        // 从属性文件中获取
         Properties properties = getProperties();
         return replaceProperty(properties.getProperty(key, defaultValue), (Map) properties);
     }
@@ -205,7 +216,7 @@ public class ConfigUtils {
 
     /**
      * Load properties file to {@link Properties} from class path.
-     *
+     * 加载properties文件 TODO 重要
      * @param fileName       properties file name. for example: <code>dubbo.properties</code>, <code>METE-INF/conf/foo.properties</code>
      * @param allowMultiFile if <code>false</code>, throw {@link IllegalStateException} when found multi file on the class path.
      * @param optional       is optional. if <code>false</code>, log warn when properties config file not found!s
@@ -291,11 +302,16 @@ public class ConfigUtils {
         return properties;
     }
 
+    /**
+     * 获取JVM进程PID
+     * @return
+     */
     public static int getPid() {
         if (PID < 0) {
             try {
                 RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
-                String name = runtime.getName(); // format: "pid@hostname"
+                // format: "pid@hostname"，如：13357@192.168.2.100
+                String name = runtime.getName();
                 PID = Integer.parseInt(name.substring(0, name.indexOf('@')));
             } catch (Throwable e) {
                 PID = 0;

@@ -56,6 +56,10 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
 
     private static final long serialVersionUID = 213195494150089726L;
 
+    /**
+     * Spting 上下文
+     * 通过实现Aware接口 {@link #setApplicationContext(ApplicationContext)}
+     */
     private static transient ApplicationContext SPRING_CONTEXT;
 
     private final transient Service service;
@@ -89,13 +93,17 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
         if (applicationContext != null) {
             SPRING_CONTEXT = applicationContext;
             try {
-                Method method = applicationContext.getClass().getMethod("addApplicationListener", new Class<?>[]{ApplicationListener.class}); // backward compatibility to spring 2.0.1
+                // backward compatibility to spring 2.0.1
+                Method method = applicationContext.getClass().getMethod("addApplicationListener",
+                        new Class<?>[]{ApplicationListener.class});
                 method.invoke(applicationContext, new Object[]{this});
                 supportedApplicationListener = true;
             } catch (Throwable t) {
                 if (applicationContext instanceof AbstractApplicationContext) {
                     try {
-                        Method method = AbstractApplicationContext.class.getDeclaredMethod("addListener", new Class<?>[]{ApplicationListener.class}); // backward compatibility to spring 2.0.1
+                        // backward compatibility to spring 2.0.1
+                        Method method = AbstractApplicationContext.class.getDeclaredMethod("addListener",
+                                new Class<?>[]{ApplicationListener.class});
                         if (!method.isAccessible()) {
                             method.setAccessible(true);
                         }
@@ -122,22 +130,37 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
         return service;
     }
 
+    /**
+     * 接收Spring 容器发布事件后，会立即执行服务导出逻辑
+     * TODO DEBUG
+     * @param event
+     */
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        // 是否有延迟导出 && 是否已导出 && 是不是已被取消导出
+        // isDelay，true表示非延迟
         if (isDelay() && !isExported() && !isUnexported()) {
             if (logger.isInfoEnabled()) {
                 logger.info("The service ready on spring started. service: " + getInterface());
             }
+            // 导出服务
             export();
         }
     }
 
+    /**
+     * 是否延迟
+     * @return true：不延迟  false：使用延迟
+     */
     private boolean isDelay() {
+        // 获取 delay
         Integer delay = getDelay();
         ProviderConfig provider = getProvider();
         if (delay == null && provider != null) {
+            // 如果前面获取的 delay 为空，这里继续获取
             delay = provider.getDelay();
         }
+        // supportedApplicationListener表示当前的 Spring 容器是否支持 ApplicationListener
         return supportedApplicationListener && (delay == null || delay == -1);
     }
 
@@ -288,8 +311,10 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
      */
     @Override
     public void export() {
+        // 暴露服务
         super.export();
         // Publish ServiceBeanExportedEvent
+        // 发布事件
         publishExportEvent();
     }
 
@@ -297,7 +322,9 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
      * @since 2.6.5
      */
     private void publishExportEvent() {
+        // 创建 ServiceBeanExportedEvent 对象
         ServiceBeanExportedEvent exportEvent = new ServiceBeanExportedEvent(this);
+        // 发布事件
         applicationEventPublisher.publishEvent(exportEvent);
     }
 

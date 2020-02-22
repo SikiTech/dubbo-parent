@@ -53,7 +53,7 @@ public @interface DubboComponentScan {
 
     /**
      * Base packages to scan for annotated @Service classes. {@link #value()} is an
-     * alias for (and mutually exclusive with) this attribute.
+     * alias for (and mutually exclusive with 并与之互斥) this attribute.
      * <p>
      * Use {@link #basePackageClasses()} for a type-safe alternative to String-based
      * package names.

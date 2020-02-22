@@ -40,10 +40,19 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
     // Log output
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRegistryFactory.class);
 
-    // The lock for the acquisition process of the registry
+    /**
+     * 锁，用于 #destroyAll() 和 #getRegistry(url) 方法，对 {@link #createRegistry(URL url)}访问的竞争
+     * The lock for the acquisition process of the registry
+     */
     private static final ReentrantLock LOCK = new ReentrantLock();
 
-    // Registry Collection Map<RegistryAddress, Registry>
+    /**
+     * Registry 集合
+     *
+     * key：{@link URL#toServiceString()}
+     * Registry Collection Map<RegistryAddress, Registry>
+     */
+    //
     private static final Map<String, Registry> REGISTRIES = new ConcurrentHashMap<String, Registry>();
 
     /**
@@ -87,12 +96,14 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
                 .removeParameters(Constants.EXPORT_KEY, Constants.REFER_KEY);
         String key = url.toServiceString();
         // Lock the registry access process to ensure a single instance of the registry
+        // 锁定注册中心获取过程，保证注册中心单一实例
         LOCK.lock();
         try {
             Registry registry = REGISTRIES.get(key);
             if (registry != null) {
                 return registry;
             }
+            // lock 保证只生成一个实例
             registry = createRegistry(url);
             if (registry == null) {
                 throw new IllegalStateException("Can not create registry " + url);
@@ -105,6 +116,12 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
         }
     }
 
+    /**
+     * 创建 Registry 对象
+     *
+     * @param url 注册中心地址
+     * @return Registry 对象
+     */
     protected abstract Registry createRegistry(URL url);
 
 }

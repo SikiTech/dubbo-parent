@@ -392,6 +392,7 @@ public final class StringUtils {
             char ch = camelName.charAt(i);
             if (ch >= 'A' && ch <= 'Z') {
                 if (buf == null) {
+                    // 存在大写字母才初始化StringBuilder
                     buf = new StringBuilder();
                     if (i > 0) {
                         buf.append(camelName.substring(0, i));

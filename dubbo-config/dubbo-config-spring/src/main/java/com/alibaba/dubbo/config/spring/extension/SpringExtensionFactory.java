@@ -33,9 +33,14 @@ import java.util.Set;
 public class SpringExtensionFactory implements ExtensionFactory {
     private static final Logger logger = LoggerFactory.getLogger(SpringExtensionFactory.class);
 
+    /**
+     * Spring Context 集合
+     */
     private static final Set<ApplicationContext> contexts = new ConcurrentHashSet<ApplicationContext>();
 
-    // 在ReferenceBean和ServiceBean中被使用，即发布和订阅中，对应的Spring上下文会被保存下来
+    /**
+     *  在ReferenceBean和ServiceBean中被使用，即发布和订阅中，对应的Spring上下文会被保存下来
+     */
     public static void addApplicationContext(ApplicationContext context) {
         contexts.add(context);
     }

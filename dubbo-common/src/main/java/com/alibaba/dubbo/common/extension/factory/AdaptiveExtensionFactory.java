@@ -31,7 +31,10 @@ import java.util.List;
 @Adaptive
 public class AdaptiveExtensionFactory implements ExtensionFactory {
 
-    // 用来缓存所有的工厂实现，包括SpiExtensionFactory和SpringExtensionFactory
+    /**
+     *  用来缓存所有的工厂实现，包括SpiExtensionFactory 和 SpringExtensionFactory
+     *  由于构造初始化时使用了 TreeSet，会按照自然排序 SpiExtensionFactory >> SpringExtensionFactory
+     */
     private final List<ExtensionFactory> factories;
 
     public AdaptiveExtensionFactory() {
@@ -45,9 +48,18 @@ public class AdaptiveExtensionFactory implements ExtensionFactory {
         factories = Collections.unmodifiableList(list);
     }
 
+    /**
+     * 获得拓展对象
+     * @param type object type. 拓展接口
+     * @param name object name. 拓展名
+     * @param <T>
+     * @return
+     */
     @Override
     public <T> T getExtension(Class<T> type, String name) {
+        // 遍历工厂数组，直到获得到ExtensionFactory 类型的拓展对象
         for (ExtensionFactory factory : factories) {
+            // 在spi护或者spring中任一个找到都行
             T extension = factory.getExtension(type, name);
             if (extension != null) {
                 return extension;

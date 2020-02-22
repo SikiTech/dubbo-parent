@@ -22,6 +22,7 @@ import com.alibaba.dubbo.common.utils.NamedThreadFactory;
 /**
  * NamedInternalThreadFactory
  * This is a threadFactory which produce {@link InternalThread}
+ * 用于生成线程名、前后台控制
  */
 public class NamedInternalThreadFactory extends NamedThreadFactory {
 

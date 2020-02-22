@@ -48,6 +48,7 @@ public class DubboConfigConfiguration {
      * Single Dubbo {@link AbstractConfig Config} Bean Binding
      */
     @EnableDubboConfigBindings({
+            // Dubbo会根据用户属性配置自动填充这些承载的对象
             @EnableDubboConfigBinding(prefix = "dubbo.application", type = ApplicationConfig.class),
             @EnableDubboConfigBinding(prefix = "dubbo.module", type = ModuleConfig.class),
             @EnableDubboConfigBinding(prefix = "dubbo.registry", type = RegistryConfig.class),

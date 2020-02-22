@@ -62,21 +62,22 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
+        // <1> 获得 @EnableDubboConfigBinding 注解
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(
                 importingClassMetadata.getAnnotationAttributes(EnableDubboConfigBinding.class.getName()));
-
+        // <2> 注册配置对应的 Bean Definition 对象
         registerBeanDefinitions(attributes, registry);
 
     }
 
     protected void registerBeanDefinitions(AnnotationAttributes attributes, BeanDefinitionRegistry registry) {
-
+        // <2.1> 获得 prefix 属性
         String prefix = environment.resolvePlaceholders(attributes.getString("prefix"));
-
+        // <2.2> 获得 type 属性，即 AbstractConfig 的实现类
         Class<? extends AbstractConfig> configClass = attributes.getClass("type");
-
+        // <2.3> 获得 multiple 属性
         boolean multiple = attributes.getBoolean("multiple");
-
+        // <2.4> 注册 Dubbo Config Bean 对象
         registerDubboConfigBeans(prefix, configClass, multiple, registry);
 
     }

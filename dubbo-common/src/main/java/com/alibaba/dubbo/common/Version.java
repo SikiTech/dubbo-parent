@@ -124,6 +124,7 @@ public final class Version {
     public static String getVersion(Class<?> cls, String defaultVersion) {
         try {
             // find version info from MANIFEST.MF first
+            // 例如 spring-boot-2.2.2.RELEASE.jar!/META-INF/MANIFEST.MF
             String version = cls.getPackage().getImplementationVersion();
             if (version == null || version.length() == 0) {
                 version = cls.getPackage().getSpecificationVersion();
@@ -158,7 +159,7 @@ public final class Version {
                 }
             }
             // return default version if no version info is found
-            return version == null || version.length() == 0 ? defaultVersion : version;
+            return (version == null || version.length() == 0 )? defaultVersion : version;
         } catch (Throwable e) {
             // return default version when any exception is thrown
             logger.error("return default version, ignore exception " + e.getMessage(), e);
@@ -185,10 +186,10 @@ public final class Version {
                     String file = url.getFile();
                     if (file != null && file.length() > 0) {
                         files.add(file);
-                    }
-                }
-            }
-            // duplicated jar is found
+        }
+    }
+}
+// duplicated jar is found
             if (files.size() > 1) {
                 String error = "Duplicate class " + path + " in " + files.size() + " jar " + files;
                 if (failOnError) {

@@ -50,8 +50,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * AbstractRegistry. (SPI, Prototype, ThreadSafe)
+ * AbstractRegistry. (SPI, Prototype, ThreadSafe)、
  *
+ * 通用的注册、订阅、查询、通知等方法。
+ * 持久化注册数据到文件，以 properties 格式存储。应用于，重启时，无法从注册中心加载服务提供者列表等信息时，从该文件中读取
+ * 注册中心数据发生变更时，通知到 Registry 后，修改 properties 对应的值，并写入 file
  */
 public abstract class AbstractRegistry implements Registry {
 
@@ -75,8 +78,6 @@ public abstract class AbstractRegistry implements Registry {
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();
     private URL registryUrl;
     // 磁盘文件服务缓存对象
-    private File file;
-
     public AbstractRegistry(URL url) {
         setUrl(url);
         // Start file save timer
@@ -96,6 +97,8 @@ public abstract class AbstractRegistry implements Registry {
         loadProperties();
         notify(url.getBackupUrls());
     }
+
+    private File file;
 
     protected static List<URL> filterEmpty(URL url, List<URL> urls) {
         if (urls == null || urls.isEmpty()) {
@@ -327,6 +330,10 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    /**
+     * 在注册中心断开，重连成功时调用
+     * @throws Exception
+     */
     protected void recover() throws Exception {
         // register
         Set<URL> recoverRegistered = new HashSet<URL>(getRegistered());
@@ -334,7 +341,9 @@ public abstract class AbstractRegistry implements Registry {
             if (logger.isInfoEnabled()) {
                 logger.info("Recover register url " + recoverRegistered);
             }
+            // TODO 从registered取出又放入，意义何在？？？
             for (URL url : recoverRegistered) {
+                // 恢复注册
                 register(url);
             }
         }
@@ -347,6 +356,7 @@ public abstract class AbstractRegistry implements Registry {
             for (Map.Entry<URL, Set<NotifyListener>> entry : recoverSubscribed.entrySet()) {
                 URL url = entry.getKey();
                 for (NotifyListener listener : entry.getValue()) {
+                    // 恢复订阅
                     subscribe(url, listener);
                 }
             }
@@ -376,6 +386,12 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    /**
+     * 通知监听器，URL 变化结果
+     * @param url
+     * @param listener
+     * @param urls
+     */
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
             throw new IllegalArgumentException("notify url == null");

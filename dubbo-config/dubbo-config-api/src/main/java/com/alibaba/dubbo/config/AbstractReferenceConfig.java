@@ -42,7 +42,10 @@ public abstract class AbstractReferenceConfig extends AbstractInterfaceConfig {
     // whether to use generic interface
     protected String generic;
 
-    // whether to find reference's instance from the current JVM
+    /**
+     * <dubbo:service injvm="true" />  废弃，不建议使用
+     * whether to find reference's instance from the current JVM
+     */
     protected Boolean injvm;
 
     // lazy create connection

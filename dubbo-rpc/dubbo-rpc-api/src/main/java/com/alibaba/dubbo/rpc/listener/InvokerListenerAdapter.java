@@ -22,6 +22,7 @@ import com.alibaba.dubbo.rpc.RpcException;
 
 /**
  * InvokerListenerAdapter
+ * 定义了 InvokerListener 适配器抽象类
  */
 public abstract class InvokerListenerAdapter implements InvokerListener {
 

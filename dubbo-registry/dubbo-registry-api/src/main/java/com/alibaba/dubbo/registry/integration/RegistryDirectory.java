@@ -55,7 +55,7 @@ import java.util.Set;
 
 /**
  * RegistryDirectory
- *
+ * 消费核心关键，持有实际Invoker和接收订阅通知
  */
 public class RegistryDirectory<T> extends AbstractDirectory<T> implements NotifyListener {
 
@@ -353,6 +353,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         break;
                     }
                 }
+                // 过滤不匹配协议
                 if (!accept) {
                     continue;
                 }
@@ -365,10 +366,12 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         + ", supported protocol: " + ExtensionLoader.getExtensionLoader(Protocol.class).getSupportedExtensions()));
                 continue;
             }
+            // 合并provider端配置数据，比如服务端IP和port等
             URL url = mergeUrl(providerUrl);
 
             String key = url.toFullString(); // The parameter urls are sorted
             if (keys.contains(key)) { // Repeated url
+                // 忽略重复推送的服务列表
                 continue;
             }
             keys.add(key);
@@ -384,6 +387,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         enabled = url.getParameter(Constants.ENABLED_KEY, true);
                     }
                     if (enabled) {
+                        // 使用具体的协议创建远程连接
                         invoker = new InvokerDelegate<T>(protocol.refer(serviceType, url), url, providerUrl);
                     }
                 } catch (Throwable t) {

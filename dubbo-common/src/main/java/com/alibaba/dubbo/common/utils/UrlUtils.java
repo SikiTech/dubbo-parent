@@ -124,13 +124,22 @@ public class UrlUtils {
         return u;
     }
 
+    /**
+     * 解析单个URL，将defaults 里的参数合并到address
+     * @param address
+     * @param defaults
+     * @return
+     */
     public static List<URL> parseURLs(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;
         }
+        // 使用竖号分隔多个不同注册中心地址
+        // 如：<dubbo:registry address="10.20.141.150:9090|10.20.154.177:9010" />
         String[] addresses = Constants.REGISTRY_SPLIT_PATTERN.split(address);
         if (addresses == null || addresses.length == 0) {
-            return null; //here won't be empty
+            //here won't be empty
+            return null;
         }
         List<URL> registries = new ArrayList<URL>();
         for (String addr : addresses) {
@@ -418,7 +427,15 @@ public class UrlUtils {
         }
     }
 
+    /**
+     * 判断服务键是否匹配
+     *
+     * @param pattern 匹配 URL
+     * @param value 被匹配 URL
+     * @return 是否
+     */
     public static boolean isServiceKeyMatch(URL pattern, URL value) {
+        // interface group value
         return pattern.getParameter(Constants.INTERFACE_KEY).equals(
                 value.getParameter(Constants.INTERFACE_KEY))
                 && isItemMatch(pattern.getParameter(Constants.GROUP_KEY),

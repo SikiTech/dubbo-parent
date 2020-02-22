@@ -1,0 +1,15 @@
+@startuml
+'定义类型
+
+
+
+
+
+
+'继承
+Class01 <|-- Class02
+
+
+
+
+@enduml

@@ -34,15 +34,28 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
         return getProxy(invoker, false);
     }
 
+    /**
+     * 创建 Proxy ，在引用服务调用
+     * @param invoker Consumer 对 Provider 调用的 Invoker
+     * @param generic
+     * @param <T>
+     * @return
+     * @throws RpcException
+     */
     @Override
     public <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException {
         Class<?>[] interfaces = null;
+        // 获取接口列表
         String config = invoker.getUrl().getParameter("interfaces");
         if (config != null && config.length() > 0) {
+            // 切分接口列表
             String[] types = Constants.COMMA_SPLIT_PATTERN.split(config);
             if (types != null && types.length > 0) {
+                // 设置服务接口类和 EchoService.class 到 interfaces 中
                 interfaces = new Class<?>[types.length + 2];
+                // 接口类型
                 interfaces[0] = invoker.getInterface();
+                // 回声测试类型
                 interfaces[1] = EchoService.class;
                 for (int i = 0; i < types.length; i++) {
                     interfaces[i + 1] = ReflectUtils.forName(types[i]);
@@ -53,6 +66,7 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
             interfaces = new Class<?>[]{invoker.getInterface(), EchoService.class};
         }
 
+        // if (!GenericService.class.isAssignableFrom(invoker.getInterface()) && generic)
         if (!invoker.getInterface().equals(GenericService.class) && generic) {
             int len = interfaces.length;
             Class<?>[] temp = interfaces;

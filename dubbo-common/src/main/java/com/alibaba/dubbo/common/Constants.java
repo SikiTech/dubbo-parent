@@ -59,8 +59,14 @@ public class Constants {
 
     public static final String DYNAMIC_KEY = "dynamic";
 
+    /**
+     * 可以通过JVM启动参数 -Ddubbo.properties.file=xxx.properties 改变缺省配置位置
+     */
     public static final String DUBBO_PROPERTIES_KEY = "dubbo.properties.file";
 
+    /**
+     * 默认属性配置
+     */
     public static final String DEFAULT_DUBBO_PROPERTIES = "dubbo.properties";
 
     public static final String SENT_KEY = "sent";
@@ -351,6 +357,9 @@ public class Constants {
 
     public static final String COMMA_SEPARATOR = ",";
 
+    /**
+     * 正则 匹配一个或多个","
+     */
     public static final Pattern COMMA_SPLIT_PATTERN = Pattern
             .compile("\\s*[,]+\\s*");
 

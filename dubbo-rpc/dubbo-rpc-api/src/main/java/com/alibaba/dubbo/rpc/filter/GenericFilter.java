@@ -45,6 +45,7 @@ import java.lang.reflect.Method;
 
 /**
  * GenericInvokerFilter.
+ * 只对提供方激活
  */
 @Activate(group = Constants.PROVIDER, order = -20000)
 public class GenericFilter implements Filter {

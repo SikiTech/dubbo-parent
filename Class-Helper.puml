@@ -1,0 +1,93 @@
+@startuml
+' 定义类型
+abstract AbstractCollection
+interface Collection
+
+' 包
+package java.lang.collection #EEEEEE {
+' 实现
+abstract class AbstractList
+interface List
+}
+
+' 定义关系、标识
+List <|.. AbstractList
+Collection <|.. AbstractCollection
+
+' 拓展
+AbstractList <|-- ArrayList
+
+' 聚合
+GooseGroup "1" o-down- "many" Goose :contains >
+' 链接的注释
+note on link #blue: 这是聚合关系，弱关联
+
+' 组合
+Goose "1" *-down- "1" Wings :composition >
+note on link #yellow: 这是组合关系，同生命周期，构造函数中new
+
+
+' 添加字段或者方法
+List : add()
+
+class ArrayList<T extends Object> {
+size ：Integer
+Object[] elementData
+size()
+}
+
+' 可访问性
+class AbstractCollection {
+ - field1
+ # field2
+ + field3 {static}
+ + field4 {abstract}
+ ~ method1()
+ + method2()
+ + method3() {abstract}
+ .. setter/getter ..
+ + setName()
+ + getAge()
+ ....
+ + otherMethod()
+}
+
+' 枚举
+enum TimeUnit {
+DAYS
+HOURS
+MINUTES
+}
+
+' 备注和模板
+class Object << general >>
+Object <|--- ArrayList
+
+note "This is a floating note" as N1
+note "This note is connected\nto several objects." as N2
+Object .. N2
+N2 .. ArrayList
+
+note left of Object : In java, every class\nextends this one.
+
+interface List
+note left: This is a list
+
+' 注释中也可以使用html标签
+note top of Object
+  In <color:#1234EE>java</color>, <size:18>every</size> <u>class</u>
+  <b>extends</b> <i>this</i> <color:red>one</color>.
+end note
+
+note as N3
+  This note is <u>also</u>
+  <b><color:royalBlue>on several</color>
+  <s>words</s> lines
+  And this is hosted by <img:https://tva1.sinaimg.cn/large/0082zybpgy1gc521i0xz9j303l03fjrr.jpg>
+end note
+
+' 注解
+annotation SuppressWarnings
+SuppressWarnings --> AbstractCollection
+
+@enduml

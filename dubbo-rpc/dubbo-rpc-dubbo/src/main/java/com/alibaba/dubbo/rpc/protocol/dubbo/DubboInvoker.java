@@ -42,14 +42,30 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class DubboInvoker<T> extends AbstractInvoker<T> {
 
+    /**
+     * 远程通信客户端数组
+     */
     private final ExchangeClient[] clients;
 
+    /**
+     * 使用的 {@link #clients} 的位置
+     */
     private final AtomicPositiveInteger index = new AtomicPositiveInteger();
 
+    /**
+     * 版本
+     */
     private final String version;
 
+    /**
+     * 销毁锁
+     * 在 {@link #destroy()} 中使用
+     */
     private final ReentrantLock destroyLock = new ReentrantLock();
 
+    /**
+     * Invoker 集合，从 {@link DubboProtocol#invokers} 获取
+     */
     private final Set<Invoker<?>> invokers;
 
     public DubboInvoker(Class<T> serviceType, URL url, ExchangeClient[] clients) {
@@ -57,6 +73,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
     }
 
     public DubboInvoker(Class<T> serviceType, URL url, ExchangeClient[] clients, Set<Invoker<?>> invokers) {
+        // 调用父类构造方法。该方法中，会将 interface group version token timeout 添加到公用的隐式传参 AbstractInvoker.attachment 属性
         super(serviceType, url, new String[]{Constants.INTERFACE_KEY, Constants.GROUP_KEY, Constants.TOKEN_KEY, Constants.TIMEOUT_KEY});
         this.clients = clients;
         // get version.
@@ -64,6 +81,13 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         this.invokers = invokers;
     }
 
+    /**
+     * 模板方法，由Invoker的invoke()方法发起调用
+     *
+     * @param invocation
+     * @return
+     * @throws Throwable
+     */
     @Override
     protected Result doInvoke(final Invocation invocation) throws Throwable {
         RpcInvocation inv = (RpcInvocation) invocation;

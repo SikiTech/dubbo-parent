@@ -29,6 +29,7 @@ import java.lang.annotation.Target;
  *
  * @see ExtensionLoader
  * @see URL
+ * @see com.alibaba.dubbo.common.extension.factory.AdaptiveExtensionFactory 标识在类上
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -54,6 +55,7 @@ public @interface Adaptive {
      * <code>String[] {"yyy.invoker.wrapper"}</code>. This name will be used to search for parameter from URL.
      *
      * @return parameter key names in URL
+     *
      */
     String[] value() default {};
 

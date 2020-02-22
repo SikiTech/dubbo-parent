@@ -1,0 +1,3 @@
+wrapper=com.sikiapp.dubbo.service.impl.HelloServiceWrapper
+wrapper2=com.sikiapp.dubbo.service.impl.HelloServiceExWrapper
+default=com.sikiapp.dubbo.service.impl.HelloServiceImpl

@@ -1,0 +1,31 @@
+@startuml
+' 定义顺序
+participant ServiceBean
+participant ServiceConfig
+participant AbstractInterfaceConfig
+
+ServiceBean -> ServiceBean :onApplicationEvent
+ServiceBean -> ServiceConfig :export
+ServiceConfig -> ServiceConfig :doExport
+ServiceConfig -> ServiceConfig :checkDefault
+ServiceConfig -> ServiceConfig :checkApplication
+ServiceConfig -> ServiceConfig :checkRegistry
+ServiceConfig -> ServiceConfig :checkProtocol
+ServiceConfig -> ServiceConfig :appendProperties
+ServiceConfig -> ServiceConfig :checkStubAndMock
+ServiceConfig -> ServiceConfig :doExportUrls
+ServiceConfig -> AbstractInterfaceConfig :loadRegistries
+AbstractInterfaceConfig ->  ServiceConfig :List<URL> registers
+ServiceConfig -> ServiceConfig :doExportUrlsFor1Protocol
+
+
+
+'com.alibaba.dubbo.config..
+
+
+
+
+
+'onApplicationEvent(ContextRefreshedEvent event)
+
+@enduml

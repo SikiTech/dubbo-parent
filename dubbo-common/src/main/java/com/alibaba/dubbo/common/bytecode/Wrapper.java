@@ -34,11 +34,21 @@ import java.util.regex.Matcher;
 
 /**
  * Wrapper.
+ * 用于创建某个对象的方法调用的包装器，以避免反射调用，提高性能
  */
 public abstract class Wrapper {
-    private static final Map<Class<?>, Wrapper> WRAPPER_MAP = new ConcurrentHashMap<Class<?>, Wrapper>(); //class wrapper map
+
+    /**
+     * Wrapper 缓存
+     * key: 服务接口  value: 对应wrapper 实例
+     */
+    private static final Map<Class<?>, Wrapper> WRAPPER_MAP = new ConcurrentHashMap<Class<?>, Wrapper>();
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
     private static final String[] OBJECT_METHODS = new String[]{"getClass", "hashCode", "toString", "equals"};
+
+    /**
+     * Object 类对应的包装器
+     */
     private static final Wrapper OBJECT_WRAPPER = new Wrapper() {
         @Override
         public String[] getMethodNames() {
@@ -91,17 +101,22 @@ public abstract class Wrapper {
 
     /**
      * get wrapper.
-     *
+     * TODO DEBUG
      * @param c Class instance.
      * @return Wrapper instance(not null).
      */
     public static Wrapper getWrapper(Class<?> c) {
-        while (ClassGenerator.isDynamicClass(c)) // can not wrapper on dynamic class.
+
+        // 判断是否继承 ClassGenerator.DC.class，如果是，拿到父类，避免重复包装
+        // can not wrapper on dynamic class.
+        while (ClassGenerator.isDynamicClass(c))
             c = c.getSuperclass();
 
+        // 指定类为 Object.class
         if (c == Object.class)
             return OBJECT_WRAPPER;
 
+        // 从缓存中获得 Wrapper 对象
         Wrapper ret = WRAPPER_MAP.get(c);
         if (ret == null) {
             ret = makeWrapper(c);
@@ -114,13 +129,16 @@ public abstract class Wrapper {
         if (c.isPrimitive())
             throw new IllegalArgumentException("Can not create wrapper for primitive type: " + c);
 
+        // 类名、加载器
         String name = c.getName();
         ClassLoader cl = ClassHelper.getClassLoader(c);
 
+        // 设置属性方法 `#setPropertyValue(o, n, v)` ， `#getPropertyValue(o, n)` ， `#invokeMethod(o, n, p, v)`的开头的代码
         StringBuilder c1 = new StringBuilder("public void setPropertyValue(Object o, String n, Object v){ ");
         StringBuilder c2 = new StringBuilder("public Object getPropertyValue(Object o, String n){ ");
         StringBuilder c3 = new StringBuilder("public Object invokeMethod(Object o, String n, Class[] p, Object[] v) throws " + InvocationTargetException.class.getName() + "{ ");
 
+        // 添加每个方法的，被调用对象的类型转换的代码
         c1.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
         c2.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
         c3.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
@@ -149,7 +167,8 @@ public abstract class Wrapper {
             c3.append(" try{");
         }
         for (Method m : methods) {
-            if (m.getDeclaringClass() == Object.class) //ignore Object's method.
+            //ignore Object's method.
+            if (m.getDeclaringClass() == Object.class)
                 continue;
 
             String mn = m.getName();
@@ -412,13 +431,14 @@ public abstract class Wrapper {
     }
 
     /**
+     * 调用方法
      * invoke method.
      *
-     * @param instance instance.
-     * @param mn       method name.
+     * @param instance instance.  被调用的对象
+     * @param mn       method name. 方法名
      * @param types
-     * @param args     argument array.
-     * @return return value.
+     * @param args     argument array. 参数类型数组
+     * @return return value. 返回值
      */
     abstract public Object invokeMethod(Object instance, String mn, Class<?>[] types, Object[] args) throws NoSuchMethodException, InvocationTargetException;
 }
