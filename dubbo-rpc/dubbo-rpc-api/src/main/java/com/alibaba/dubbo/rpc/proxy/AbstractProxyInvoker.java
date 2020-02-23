@@ -91,7 +91,8 @@ public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
     }
 
     /**
-     * 执行调用，在子类中使用匿名实现
+     * 执行调用，
+     * 抽象方法，在子类中使用匿名实现
      *
      * @param proxy 代理的对象
      * @param methodName 方法名

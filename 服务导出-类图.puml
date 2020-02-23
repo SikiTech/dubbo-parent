@@ -8,7 +8,12 @@ abstract AbstractInterfaceConfig
 class ServiceConfig<T>
 interface ApplicationContextAware
 interface Aware
-
+abstract AbstractProxyInvoker<T>
+interface Invoker<T>
+class JavassistProxyFactory
+abstract AbstractProxyFactory
+interface ProxyFactory
+abstract Wrapper
 
 EventListener <|-- ApplicationListener
 ApplicationListener <|.. ServiceBean
@@ -16,9 +21,17 @@ AbstractInterfaceConfig <|-- AbstractServiceConfig
 AbstractServiceConfig <|-- ServiceConfig
 ServiceConfig <|-- ServiceBean
 
-Aware <|-- ApplicationContextAware
+Aware <|.. ApplicationContextAware
 ApplicationContextAware <|.. ServiceBean
 
+Invoker <|.. AbstractProxyInvoker
+ProxyFactory <|.. AbstractProxyFactory
+AbstractProxyFactory <|-- JavassistProxyFactory
+
+JavassistProxyFactory .right.> AbstractProxyInvoker :<<create>>
+note on link #yellow: 使用匿名的方式创建Invoker
+
+JavassistProxyFactory ..> Wrapper
 
 interface EventListener {
     + onApplicationEvent(ContextRefreshedEvent event)
@@ -27,7 +40,22 @@ interface EventListener {
 
 class ServiceBean<T> {
     + onApplicationEvent(ContextRefreshedEvent event)
+}
 
+interface Invoker<T> {
+    +invoke(Incation)
+}
+
+class AbstractProxyInvoker<T> {
+    +invoke(Incation)
+}
+
+interface ProxyFactory {
+    +getInvoker() :Invoker<T>
+}
+
+class Wrapper{
+    +invokeMethod()
 }
 
 note right of ServiceBean: onApplicationEvent()是服务导出入口

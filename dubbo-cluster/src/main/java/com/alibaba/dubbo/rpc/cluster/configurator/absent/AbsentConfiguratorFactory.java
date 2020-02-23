@@ -22,7 +22,7 @@ import com.alibaba.dubbo.rpc.cluster.ConfiguratorFactory;
 
 /**
  * AbsentConfiguratorFactory
- *
+ * url参数为"absent"是创建
  */
 public class AbsentConfiguratorFactory implements ConfiguratorFactory {
 

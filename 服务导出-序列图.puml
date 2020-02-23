@@ -3,6 +3,8 @@
 participant ServiceBean
 participant ServiceConfig
 participant AbstractInterfaceConfig
+participant AbstractProxyFactory
+participant Protocol
 
 ServiceBean -> ServiceBean :onApplicationEvent
 ServiceBean -> ServiceConfig :export
@@ -17,10 +19,13 @@ ServiceConfig -> ServiceConfig :doExportUrls
 ServiceConfig -> AbstractInterfaceConfig :loadRegistries
 AbstractInterfaceConfig ->  ServiceConfig :List<URL> registers
 ServiceConfig -> ServiceConfig :doExportUrlsFor1Protocol
+note left: 在单个协议上注册、暴露
+ServiceConfig -> AbstractProxyFactory :getInvoker
+ServiceConfig -> Protocol :export
+ServiceConfig -> Wrapper :getWrapper
+Wrapper -> Wrapper :makeWrapper
 
 
-
-'com.alibaba.dubbo.config..
 
 
 

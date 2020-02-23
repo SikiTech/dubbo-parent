@@ -17,6 +17,7 @@ partition 检查配置 {
     :检测并处理泛化服务和普通服务类;
     :检测本地存根配置，并进行相应的处理;
     :对 ApplicationConfig、RegistryConfig 等配置类进行检测，为空则尝试创建，\n若无法创建则抛出异常;
+
 }
 
 

@@ -330,7 +330,7 @@ public final class ReflectUtils {
      * get class desc.
      * boolean[].class => "[Z"
      * Object.class => "Ljava/lang/Object;"
-     *
+     * TODO DEBUG
      * @param c class.
      * @return desc.
      * @throws NotFoundException
