@@ -69,12 +69,13 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
     @Override
     public void create(String path, boolean ephemeral) {
         if (!ephemeral) {
+            // 如果要创建的节点类型非临时节点，那么这里要检测节点是否存在
             if (checkExists(path)) {
                 return;
             }
         }
 
-        // 循环创建父路径
+        // 递归创建上一级路径，跟文件夹的逻辑类似
         // 例如：path=/dubbo/com.alibaba.dubbo.demo.DemoService/providers，先创建/dubbo，再/dubbo/xxxService/，最后//dubbo/xxxService/providers
         int i = path.lastIndexOf('/');
         if (i > 0) {
@@ -82,7 +83,7 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
             create(path.substring(0, i), false);
         }
 
-        // 创建临时节点
+        // 调用客户端创建临时节点
         if (ephemeral) {
             createEphemeral(path);
         // 创建持久节点

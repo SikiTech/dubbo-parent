@@ -84,14 +84,15 @@ public class ZookeeperRegistry extends FailbackRegistry {
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
         }
-        // 获得 Zookeeper 根节点
+        // 获得 Zookeeper 根节点  默认/dubbo
         String group = url.getParameter(Constants.GROUP_KEY, DEFAULT_ROOT);
         if (!group.startsWith(Constants.PATH_SEPARATOR)) {
             group = Constants.PATH_SEPARATOR + group;
         }
         this.root = group;
-        // 创建 Zookeeper Client
+        // 创建 Zookeeper 客户端，默认为 CuratorZookeeperTransporter
         zkClient = zookeeperTransporter.connect(url);
+        // 添加状态监听器
         // 添加 StateListener 对象。该监听器，在重连时，调用恢复方法
         zkClient.addStateListener(new StateListener() {
             @Override
@@ -137,6 +138,8 @@ public class ZookeeperRegistry extends FailbackRegistry {
     @Override
     protected void doRegister(URL url) {
         try {
+            // 调用了 Zookeeper 客户端创建服务节点，节点路径由 toUrlPath 方法生成，路径格式如: /${group}/${serviceInterface}/providers/${url}
+            // 比如：/dubbo/org.apache.dubbo.DemoService/providers/dubbo%3A%2F%2F127.0.0.1......
             // 是否动态数据。若为 false ，该数据为持久数据，当注册方退出时，数据依然保存在注册中心
             zkClient.create(toUrlPath(url), url.getParameter(Constants.DYNAMIC_KEY, true));
         } catch (Throwable e) {

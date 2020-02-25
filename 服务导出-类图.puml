@@ -14,6 +14,8 @@ class JavassistProxyFactory
 abstract AbstractProxyFactory
 interface ProxyFactory
 abstract Wrapper
+interface ExchangeServer
+interface Server
 
 EventListener <|-- ApplicationListener
 ApplicationListener <|.. ServiceBean
@@ -32,11 +34,13 @@ JavassistProxyFactory .right.> AbstractProxyInvoker :<<create>>
 note on link #yellow: 使用匿名的方式创建Invoker
 
 JavassistProxyFactory ..> Wrapper
+Server <|-- ExchangeServer
+
+
 
 interface EventListener {
     + onApplicationEvent(ContextRefreshedEvent event)
 }
-
 
 class ServiceBean<T> {
     + onApplicationEvent(ContextRefreshedEvent event)
@@ -65,4 +69,9 @@ ServiceBean 是 Dubbo 与 Spring 框架进行整合的关键，
 可以看做是两个框架之间的桥梁
 end note
 
+
+
+note as N2
+Dubbo 服务导出过程，包括配置检测，URL 组装，Invoker 创建过程、导出服务以及注册服务
+end note
 @enduml

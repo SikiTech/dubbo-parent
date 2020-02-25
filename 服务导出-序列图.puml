@@ -1,36 +1,178 @@
 @startuml
+title 服务导出序列图
+autonumber 1
+
 ' 定义顺序
-participant ServiceBean
-participant ServiceConfig
-participant AbstractInterfaceConfig
-participant AbstractProxyFactory
-participant Protocol
+participant ServiceBean <<(C,#ADD1B2)>>
+participant ServiceConfig <<(C,#ADD1B2)>>
+participant AbstractConfig <<(A,#87CEFA)>>
+participant AbstractInterfaceConfig <<(A,#87CEFA)>>
+participant AbstractProxyFactory <<(A,#87CEFA)>>
+participant Wrapper <<(C,#ADD1B2)>>
+participant InjvmProtocol <<(C,#ADD1B2)>>
+participant RegistryProtocol <<(C,#ADD1B2)>>
+participant DubboProtocol <<(C,#ADD1B2)>>
+participant ProviderConsumerRegTable <<(C,#ADD1B2)>>
+participant Registry <<(I,#9370DB)>>
+participant Exchangers <<(C,#ADD1B2)>>
+participant HeaderExchanger <<(C,#ADD1B2)>>
+participant Transporter <<(I,#9370DB)>>
+participant AbstractRegistryFactory <<(C,#ADD1B2)>>
+participant ZookeeperRegistryFactory <<(C,#ADD1B2)>>
+participant CuratorZookeeperTransporter <<(C,#ADD1B2)>>
+participant CuratorFramework <<(C,#ADD1B2)>>
+participant FailbackRegistry <<(C,#ADD1B2)>>
+participant AbstractZookeeperClient <<(C,#ADD1B2)>>
+' 临时创建
+participant InjvmExporter <<(C,#ADD1B2)>>
+participant AbstractProxyInvoker <<(A,#87CEFA)>>
+participant NettyServer <<(C,#ADD1B2)>>
+participant OverrideListener <<(C,#ADD1B2)>>
+participant DestroyableExporter <<(C,#ADD1B2)>>
+participant ZookeeperRegistry <<(C,#ADD1B2)>>
+participant CuratorZookeeperClient <<(C,#ADD1B2)>>
+participant CuratorFrameworkFactory.Builder <<(C,#ADD1B2)>>
 
-ServiceBean -> ServiceBean :onApplicationEvent
-ServiceBean -> ServiceConfig :export
-ServiceConfig -> ServiceConfig :doExport
-ServiceConfig -> ServiceConfig :checkDefault
-ServiceConfig -> ServiceConfig :checkApplication
-ServiceConfig -> ServiceConfig :checkRegistry
-ServiceConfig -> ServiceConfig :checkProtocol
-ServiceConfig -> ServiceConfig :appendProperties
-ServiceConfig -> ServiceConfig :checkStubAndMock
+ServiceBean -> ServiceBean ++ :onApplicationEvent
+ServiceBean -[#red]> ServiceConfig ++ :export
+deactivate ServiceBean
+ServiceConfig -> ServiceConfig ++ :doExport
+deactivate ServiceConfig
+group 检验参数
+autonumber 4.1
+ServiceConfig -> AbstractInterfaceConfig ++ :checkDefault
+ServiceConfig -> AbstractInterfaceConfig :checkApplication
+ServiceConfig -> AbstractInterfaceConfig :checkRegistry
+ServiceConfig -> AbstractInterfaceConfig :checkProtocol
+ServiceConfig -> AbstractConfig ++ :appendProperties
+deactivate AbstractConfig
+ServiceConfig -> AbstractInterfaceConfig :checkStubAndMock
+deactivate AbstractInterfaceConfig
+end
+autonumber 5
 ServiceConfig -> ServiceConfig :doExportUrls
-ServiceConfig -> AbstractInterfaceConfig :loadRegistries
-AbstractInterfaceConfig ->  ServiceConfig :List<URL> registers
-ServiceConfig -> ServiceConfig :doExportUrlsFor1Protocol
+ServiceConfig -> AbstractInterfaceConfig ++ :loadRegistries
+return List<URL> registers
+'AbstractInterfaceConfig ->  ServiceConfig :List<URL> registers
+ServiceConfig -> ServiceConfig ++ :doExportUrlsFor1Protocol
 note left: 在单个协议上注册、暴露
-ServiceConfig -> AbstractProxyFactory :getInvoker
-ServiceConfig -> Protocol :export
-ServiceConfig -> Wrapper :getWrapper
-Wrapper -> Wrapper :makeWrapper
+autonumber 9.1
+== 服务导出逻辑 ==
+alt scope=local 本地暴露
+    ServiceConfig -> ServiceConfig ++ :exportLocal(url)
+    ServiceConfig -> AbstractProxyFactory ++ :getInvoker
+    return invoker
+    ServiceConfig -[#red]> InjvmProtocol ++ :export(invoker)
+    InjvmProtocol -> InjvmExporter ** :create InjvmExporter
+    return injvmExporter
+    ServiceConfig -> ServiceConfig :add2exporters
+    deactivate ServiceConfig
+else scope=remote 远程暴露
+    autonumber 10.1
+    alt 有注册中心
+        ServiceConfig -> ServiceConfig :loadMonitor
+        ServiceConfig -[#red]> AbstractProxyFactory ++ :getInvoker
+        AbstractProxyFactory -> Wrapper ++ :getWrapper
+        Wrapper -> Wrapper :makeWrapper
+        return wrapper
+        AbstractProxyFactory -> AbstractProxyInvoker ** :create
+        activate AbstractProxyInvoker
+        AbstractProxyInvoker -> AbstractProxyInvoker ++ :doInvoke
+        AbstractProxyInvoker -> Wrapper ++ : invokeMethod
+        return Result
+        AbstractProxyInvoker --> AbstractProxyFactory -- :invoke
+        AbstractProxyFactory --> ServiceConfig :invoke
+        deactivate AbstractProxyFactory
+        deactivate AbstractProxyInvoker
+        deactivate AbstractProxyInvoker
+        ServiceConfig -> RegistryProtocol ++ :export(invoker)
+        RegistryProtocol -> RegistryProtocol ++ :doLocalExport(invoker)
+        RegistryProtocol -> DubboProtocol ++ :doLocalExport(invoker)
+        DubboProtocol -> DubboProtocol ++ :export(invoker)
+        DubboProtocol -> DubboProtocol ++ :openServer
+        DubboProtocol -> DubboProtocol ++ :createServer(invoker)
+        DubboProtocol -> Exchangers ++ :bind
+        Exchangers -> HeaderExchanger ++ :bind
+        HeaderExchanger -> Transporter ++ :bind
+        note right: bind()为自适应方法，拓展实现为\n[NettyTransporter, MinaTransporter]
+        Transporter -> NettyServer ** :create
+        activate NettyServer
+        NettyServer -> NettyServer :doOpen
+        deactivate NettyServer
+        return server
+        return ExchangeServer
+        return ExchangeServer
+        deactivate DubboProtocol
+        deactivate DubboProtocol
+        deactivate DubboProtocol
+        return Exporter
+        deactivate RegistryProtocol
+        note left: 打开端口，导出服务，把服务实例存储到map
+        RegistryProtocol -> RegistryProtocol : getRegistry(invoker)
+        note left: 创建注册中心实例
+        RegistryProtocol -> ProviderConsumerRegTable ++ :registerProvider
+        note left: 获得服务提供者 URL
+        deactivate ProviderConsumerRegTable
+        RegistryProtocol -> RegistryProtocol : register(invoker)
+        note left: 向注册中心注册服务提供者
+        RegistryProtocol -> RegistryProtocol : getSubscribedOverrideUrl
+        note left: 获取订阅 URL
+        RegistryProtocol -> OverrideListener ** :create
+        note left: 创建监听器，并缓存
+        RegistryProtocol -> RegistryProtocol : cacheListeners.put()
+        RegistryProtocol -> Registry ++ : subscribe
+        note left: 向注册中心进行订阅 override 数据
+        deactivate Registry
+        RegistryProtocol -> DestroyableExporter ** :create
+        note left: 创建并返回 DestroyableExporter
+        RegistryProtocol -> ServiceConfig :return DestroyableExporter
+        deactivate RegistryProtocol
+        ServiceConfig -> ServiceConfig :exporters.add(exporter)
+        'autonumber resume
+    autonumber 11.1
+    else 直连
+        ServiceConfig -> AbstractProxyFactory ++ :getInvoker
+        return invoker
+        ServiceConfig -> DubboProtocol ++ :export(invoker)
+        deactivate DubboProtocol
+        ServiceConfig -> ServiceConfig :add2exporters
+    end
+end
+deactivate ServiceConfig
+deactivate ServiceConfig
+== 服务注册逻辑 ==
+
+RegistryProtocol -> RegistryProtocol :register
+RegistryProtocol -> AbstractRegistryFactory ++ :getRegistry
+AbstractRegistryFactory -> ZookeeperRegistryFactory ++ :createRegistry
+ZookeeperRegistryFactory -> ZookeeperRegistry ** :create
+activate ZookeeperRegistry
+ZookeeperRegistry -> CuratorZookeeperTransporter ++ :connect
+CuratorZookeeperTransporter -> CuratorZookeeperClient ** :create
+activate CuratorZookeeperClient
+CuratorZookeeperClient -> CuratorFrameworkFactory.Builder ** :create
+activate CuratorFrameworkFactory.Builder
+CuratorFrameworkFactory.Builder -> CuratorFrameworkFactory.Builder :build
+return CuratorFramework
+note left: zk客户端
+CuratorZookeeperClient -> CuratorFramework ++ :start()
+note left: 启动客户端
+deactivate CuratorFramework
+return ZookeeperClient
+return ZookeeperClient
+ZookeeperRegistry -> ZookeeperRegistry :zkClient.addStateListener
+return Registry
+return Registry
+note left: 获取注册中心实例
+return Registry
+RegistryProtocol -> FailbackRegistry :register(registedProviderUrl)
+note left: 注册服务
+FailbackRegistry -> ZookeeperRegistry ++ :doRegister(url)
+ZookeeperRegistry -> AbstractZookeeperClient ++ :create()
+note left: 调用了 Zookeeper客户端创建服务节点
 
 
 
 
-
-
-
-'onApplicationEvent(ContextRefreshedEvent event)
 
 @enduml

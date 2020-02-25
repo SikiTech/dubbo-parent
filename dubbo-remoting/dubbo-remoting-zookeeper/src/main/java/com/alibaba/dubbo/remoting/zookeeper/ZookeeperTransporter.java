@@ -26,7 +26,7 @@ import com.alibaba.dubbo.common.extension.SPI;
  * 默认使用CuratorZookeeperTransporter 实现
  */
 @SPI("curator")
-public interface ZookeeperTransporter {
+public interface  ZookeeperTransporter {
 
     /**
      * 创建ZookeeperClient 对象

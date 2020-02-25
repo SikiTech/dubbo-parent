@@ -36,6 +36,8 @@ public interface Protocol {
 
     /**
      * 暴露远程服务
+     * 找到参数的URL属性 。例如，Invoker 有 `#getURL()` 方法
+     *
      * Export service for remote invocation: <br>
      * 1. Protocol should record request source address after receive a request:
      * RpcContext.getContext().setRemoteAddress();<br>

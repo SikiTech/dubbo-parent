@@ -46,7 +46,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
     public CuratorZookeeperClient(URL url) {
         super(url);
         try {
-            // 创建 client 对象
+            // 创建 CuratorFramework 构造器
             CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()
                     // 连接地址
                     .connectString(url.getBackupAddress())
@@ -58,6 +58,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
             if (authority != null && authority.length() > 0) {
                 builder = builder.authorization("digest", authority.getBytes());
             }
+            // 构建 CuratorFramework client实例
             client = builder.build();
 
             // 添加连接监听器
@@ -66,6 +67,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
                 public void stateChanged(CuratorFramework client, ConnectionState state) {
                     // 在连接状态发生变化时，调用 #stateChange(state) 方法，进行 StateListener 的回调
                     if (state == ConnectionState.LOST) {
+                        // 回调
                         CuratorZookeeperClient.this.stateChanged(StateListener.DISCONNECTED);
                     } else if (state == ConnectionState.CONNECTED) {
                         CuratorZookeeperClient.this.stateChanged(StateListener.CONNECTED);
@@ -74,7 +76,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
                     }
                 }
             });
-            // 启动 client
+            // 启动客户端
             client.start();
         } catch (Exception e) {
             throw new IllegalStateException(e.getMessage(), e);
@@ -84,6 +86,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
     @Override
     public void createPersistent(String path) {
         try {
+            // 通过 Curator 框架创建节点
             client.create().forPath(path);
         } catch (NodeExistsException e) {
         } catch (Exception e) {
@@ -94,6 +97,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
     @Override
     public void createEphemeral(String path) {
         try {
+            // 通过 Curator 框架创建节点
             client.create().withMode(CreateMode.EPHEMERAL).forPath(path);
         } catch (NodeExistsException e) {
         } catch (Exception e) {

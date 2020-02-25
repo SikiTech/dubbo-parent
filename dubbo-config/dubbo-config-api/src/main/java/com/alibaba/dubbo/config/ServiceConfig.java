@@ -439,7 +439,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
-        // 加载注册中心链接
+        // 加载注册中心链接，会把协议头设置为 "rigistry"
         List<URL> registryURLs = loadRegistries(true);
         for (ProtocolConfig protocolConfig : protocols) {
             // 如果服务指定暴露多个协议（Dubbo、REST），则依次在每个协议下暴露服务
@@ -639,11 +639,11 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         if (StringUtils.isNotEmpty(proxy)) {
                             registryURL = registryURL.addParameter(Constants.PROXY_KEY, proxy);
                         }
-                        // 通过动态代理转换成Invoker，registryURL存储的是注册中心地址，使用export作为key追加服务元数据信息,
+                        // 通过动态代理创建Invoker，registryURL存储的是注册中心地址，使用export作为key追加服务元数据信息,
                         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(Constants.EXPORT_KEY, url.toFullString()));
                         // DelegateProviderMetaDataInvoker 用于持有 Invoker 和 ServiceConfig
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
-                        // 导出服务，并生成 Exporter
+                        // 导出服务，并生成 Exporter，export是自适应方法
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
                         // 服务暴露后注册中心注册服务信息
                         exporters.add(exporter);
@@ -671,6 +671,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void exportLocal(URL url) {
+        // 如果 URL 的协议头等于 injvm，说明已经导出到本地了，无需再次导出
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
             // 显式指定injvm协议进行暴露
             URL local = URL.valueOf(url.toFullString())
@@ -681,8 +682,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             ServiceClassHolder.getInstance().pushServiceClass(getServiceClass(ref));
             // Protocol.export本身是一个自适应方法，根据injvm=com.alibaba.dubbo.rpc.protocol.injvm.InjvmProtocol，
             // 此处会调用InjvmProtocol#export()
-            // 使用 ProxyFactory 创建 Invoker 对象
-            // 使用 Protocol 暴露 Invoker 对象
+            // 使用 ProxyFactory 创建 Invoker 对象，并使用 Protocol 暴露 Invoker 对象
             Exporter<?> exporter = protocol.export(
                     proxyFactory.getInvoker(ref, (Class) interfaceClass, local));
             exporters.add(exporter);

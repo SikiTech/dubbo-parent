@@ -41,7 +41,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRegistryFactory.class);
 
     /**
-     * 锁，用于 #destroyAll() 和 #getRegistry(url) 方法，对 {@link #createRegistry(URL url)}访问的竞争
+     * 锁，用于 #destroyAll() 和 #getRegistry 方法，对 {@link #createRegistry(URL url)}访问的竞争
      * The lock for the acquisition process of the registry
      */
     private static final ReentrantLock LOCK = new ReentrantLock();
@@ -89,6 +89,11 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
         }
     }
 
+    /**
+     * 创建注册中心
+     * @param url Registry address, is not allowed to be empty
+     * @return
+     */
     @Override
     public Registry getRegistry(URL url) {
         url = url.setPath(RegistryService.class.getName())
@@ -96,18 +101,21 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
                 .removeParameters(Constants.EXPORT_KEY, Constants.REFER_KEY);
         String key = url.toServiceString();
         // Lock the registry access process to ensure a single instance of the registry
-        // 锁定注册中心获取过程，保证注册中心单一实例
+        // 锁定注册中心获取过程，保证注册中心单一实例 TODO ??? 这里使用双重检查锁
         LOCK.lock();
         try {
+            // 访问缓存
             Registry registry = REGISTRIES.get(key);
             if (registry != null) {
                 return registry;
             }
+            // 缓存未命中，创建 Registry 实例
             // lock 保证只生成一个实例
             registry = createRegistry(url);
             if (registry == null) {
                 throw new IllegalStateException("Can not create registry " + url);
             }
+            // 写入缓存
             REGISTRIES.put(key, registry);
             return registry;
         } finally {

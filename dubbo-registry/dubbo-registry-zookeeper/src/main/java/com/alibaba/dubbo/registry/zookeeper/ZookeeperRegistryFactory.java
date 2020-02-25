@@ -29,6 +29,7 @@ public class ZookeeperRegistryFactory extends AbstractRegistryFactory {
 
     /**
      * Zookeeper 工厂
+     * zookeeperTransporter 由 SPI 在运行时注入，类型为 ZookeeperTransporter$Adaptive
      */
     private ZookeeperTransporter zookeeperTransporter;
 
@@ -45,6 +46,7 @@ public class ZookeeperRegistryFactory extends AbstractRegistryFactory {
 
     @Override
     public Registry createRegistry(URL url) {
+        // 创建 ZookeeperRegistry
         return new ZookeeperRegistry(url, zookeeperTransporter);
     }
 

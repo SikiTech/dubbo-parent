@@ -71,7 +71,7 @@ public class RegistryProtocol implements Protocol {
      *
      * key：服务 Dubbo URL
      * To solve the pproblem of RMI repeated exposure port conflicts, the services that have been exposed are no longer exposed.
-     * 用于解决rmi重复暴露端口冲突的问题，已经暴露过的服务不再重新暴露
+     * 用于解决RMI(Romote Method Invocation)重复暴露端口冲突的问题，已经暴露过的服务不再重新暴露
      * providerurl <--> exporter
      */
     private final Map<String, ExporterChangeableWrapper<?>> bounds = new ConcurrentHashMap<String, ExporterChangeableWrapper<?>>();
@@ -143,7 +143,9 @@ public class RegistryProtocol implements Protocol {
     }
 
     public void register(URL registryUrl, URL registedProviderUrl) {
+        // 获取注册中心实例  Registry
         Registry registry = registryFactory.getRegistry(registryUrl);
+        // 注册服务
         registry.register(registedProviderUrl);
     }
 
@@ -158,20 +160,25 @@ public class RegistryProtocol implements Protocol {
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
         // export invoker
-        // 打开端口，把服务实例存储到map
+        // 打开端口，导出服务，把服务实例存储到map
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker);
 
-        // 获得注册中心 URL
+        // 获取注册中心 URL，以 zookeeper 注册中心为例，得到的示例 URL 如下：
+        // zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.2
+        // &export=dubbo://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provide\
+        // &dubbo=2.0.2&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
         URL registryUrl = getRegistryUrl(originInvoker);
 
-        // registry provider
         // 创建注册中心实例
+        // 根据 URL 加载 Registry 实现类，比如 ZookeeperRegistry
         final Registry registry = getRegistry(originInvoker);
 
         // 获得服务提供者 URL
+        // dubbo://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider\
+        // &dubbo=2.0.2&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
         final URL registeredProviderUrl = getRegisteredProviderUrl(originInvoker);
 
-        //to judge to delay publish whether or not
+        // 获取 register 参数，是否注册
         boolean register = registeredProviderUrl.getParameter("register", true);
 
         // 向本地注册表，注册服务提供者
@@ -184,21 +191,27 @@ public class RegistryProtocol implements Protocol {
             ProviderConsumerRegTable.getProviderWrapper(originInvoker).setReg(true);
         }
 
-        // 使用 OverrideListener 对象，订阅配置规则
-        // Subscribe the override data
-        // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call the same service. Because the subscribed is cached key with the name of the service, it causes the subscription information to cover.
+        // 获取订阅 URL，比如：
+        // provider://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?category=configurators&check=false&anyhost=true
+        // &application=demo-provider&dubbo=2.0.2&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
+        // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call
+        // the same service. Because the subscribed is cached key with the name of the service, it causes the subscription information to cover.
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(registeredProviderUrl);
+        // 创建监听器
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
+        // 向注册中心进行订阅 override 数据
         registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
-        //Ensure that a new exporter instance is returned every time export
+        // 创建并返回 DestroyableExporter
+        // Ensure that a new exporter instance is returned every time export
         return new DestroyableExporter<T>(exporter, originInvoker, overrideSubscribeUrl, registeredProviderUrl);
     }
 
     /**
      * 暴露服务
      * 此处的 Local 指的是，本地启动服务，但是不包括向注册中心注册服务的意思
-     *
+     * TODO DEBUG
+     * TODO 比较一下 {@link #bounds} 和 {@link com.alibaba.dubbo.rpc.protocol.AbstractProtocol#exporterMap}
      * @param originInvoker
      * @param <T>
      * @return

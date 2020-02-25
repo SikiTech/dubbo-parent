@@ -513,6 +513,7 @@ public abstract class Wrapper {
     /**
      * 调用方法
      * invoke method.
+     * makeWrapper() 会生成此方法
      *
      * @param instance instance.  被调用的对象
      * @param mn       method name. 方法名

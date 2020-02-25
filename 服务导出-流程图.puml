@@ -23,12 +23,26 @@ partition 检查配置 {
 
 partition 组装URL {
     :doExportUrls();
+    :使用代理创建Invoker;
 
 }
 
+partition doLocalExport {
+    :exporter = bounds.get(key);
+    if (exporter == null) then (yes)
+        :创建InvokerDelegete;
+        :protocol.export(invokerDelegete);
+        :new ExporterChangeableWrapper;
+        :bounds.put(key, exporter);
+    else (no)
+        :返回export;
+    endif
 
-:Dubbo 执行导出逻辑;
+}
 
+:执行导出逻辑;
+:服务注册逻辑;
+    :创建注册中心实例;
 
 
 
